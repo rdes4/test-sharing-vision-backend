@@ -56,11 +56,12 @@ class PostController extends Controller
         
     }
 
-    public function updatePost(Request $request, Post $post){
+    public function updatePost(Request $request, Post $post, $id){
         $input = $request->all();
-        $post = Post::find(1);
+        $post = Post::find($id);
 
-        $validator = Validator::make($input, 
+        if (Post::where('id', $id)->exists()) {
+            $validator = Validator::make($input, 
             [
                 'title' => 'required|min:20',
                 'content' => 'required|min:200',
@@ -73,21 +74,27 @@ class PostController extends Controller
             
         );
 
-        if ($validator->fails()) {
-            return response()->json($validator->errors(), 422);
+            if ($validator->fails()) {
+                return response()->json($validator->errors(), 422);
+            }
+
+            $post->title = $input['title'];
+            $post->content = $input['content'];
+            $post->category = $input['category'];
+            $post->status = $input['status'];
+            $post->save();
+
+            return response()->json([
+                "success" => true,
+                "message" => "Post updated successfully.",
+                "data" => $post
+            ]);
+        } else {
+            return response()->json([
+                "message" => "User Not Found"
+            ], 201);
         }
 
-        $post->title = $input['title'];
-        $post->content = $input['content'];
-        $post->category = $input['category'];
-        $post->status = $input['status'];
-        $post->save();
-
-        return response()->json([
-            "success" => true,
-            "message" => "Post updated successfully.",
-            "data" => $post
-        ]);
     }
 
     public function deletePost($id){
